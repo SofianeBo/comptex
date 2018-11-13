@@ -1,0 +1,122 @@
+#!/bin/bash
+#
+version=0.6
+#___ Creation: 2010. 
+#___ Last Update : Sep, 10. 2014.
+
+
+
+#__ BEGIN SCRIPT
+
+maker=pdflatex
+pdfreader="open -a Preview"
+
+
+#default values for command line variables 
+clean=0			
+cleanOnly=0
+bibtex=1
+cleanaux=1
+cleanbbl=1
+
+#dstDir="./"		
+checkbibtex=0
+checkbibOnly=0
+showPDF=0
+
+function Usage(){
+
+cat << EOF
+USAGE:   comptex [-options] file[.tex]
+VERSION: $version
+OPTIONS: 
+	-B 	: do NOT invoke bibtex
+	-c	: clean directory after compilation
+	-a	: keep .aux file after compilation (if -c is invoked)
+	-b	: keep .bbl file after compilation (if -c is invoked)
+	-C	: clean only	
+	-S	: show PDF
+	-l	: latex instead of pdflatex
+	-x      : xelatex instead of pdflatex
+	-g <lib>  : update <lib> with new cite references.
+	-G <lib>  : update <lib> only.
+EOF
+}
+
+
+
+while getopts "hxBlabcCg:d:G:S" Option
+do
+  case $Option in
+    c     ) clean=1;;
+    a	  ) cleanaux=0;;
+    b	  ) cleanbbl=0;;
+    B     ) bibtex=0;;
+    l	  ) maker=latex;;
+    x     ) maker=xelatex;;
+    C	  ) cleanOnly=1;; 
+#    d	  ) dstDir=$OPTARG;;
+    h	  ) Usage; exit;;
+    g	  ) bibfile=$OPTARG; checkbibtex=1;;
+    G	  ) bibfile=$OPTARG; checkbibOnly=1;;
+    S	  ) showPDF=1;;
+    *     ) echo -e "Exiting... One or more bad option(s).\n"; exit  ;;
+  esac
+done
+
+shift $((OPTIND-1))
+texfile="$@"
+texfile=${texfile%%.*}
+
+if [[ -z $texfile ]]; then
+	echo -e "Nothing to do... \n"
+	exit
+fi
+
+if [ $cleanOnly -eq 1 ]; then
+	echo "## Cleaning all."
+	rm -f $texfile.aux $texfile.bbl $texfile.blg $texfile.log $texfile.out $texfile.toc
+	exit
+fi
+
+if [ $checkbibOnly -eq 1 ]; then
+	echo -e "## Updating the library only.\n"
+	$maker $texfile
+	getcitations -v $texfile $bibfile
+	rm -f $texfile.blg $texfile.log $texfile.out $texfile.toc $texfile.aux $texfile.bbl
+	exit
+fi
+
+
+if [ $checkbibtex -eq 1 ]; then
+	$maker $texfile
+	getcitations -v $texfile $bibfile
+else
+	$maker $texfile
+fi
+
+if [ $bibtex -eq 1 ]; then
+	bibtex $texfile
+	$maker $texfile
+#	bibtex $texfile
+	$maker $texfile
+fi
+
+
+if [ $clean -eq 1 ]; then
+	rm -f $texfile.blg $texfile.log $texfile.out $texfile.toc
+	if [ $cleanaux -eq 1 ]; then
+		rm -f $texfile.aux
+	fi
+	if [ $cleanbbl -eq 1 ]; then
+		rm -f $texfile.bbl
+	fi
+fi
+
+
+if [ $showPDF -eq 1 ]; then
+	$pdfreader $texfile.pdf &
+fi
+
+exit
+#___ END SCRIPT
