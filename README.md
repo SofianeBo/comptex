@@ -1,6 +1,6 @@
 # comptex
 
-This is a compiler for latex documents. It significantly simplifies the process of PDF creation and avoids compilation/referencing errors. Flag it as executable and add its parent folder to the $PATH of your shell.
+This is a compiler for latex documents. It simplifies the process of PDF creation and avoids compilation/referencing errors. Flag it as executable and add its parent folder to the $PATH of your shell.
 
 USAGE:   `comptex [-options] file[.tex]` <br/> 
 ```
